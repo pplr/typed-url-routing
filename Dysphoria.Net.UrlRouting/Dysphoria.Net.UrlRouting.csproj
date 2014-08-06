@@ -74,7 +74,6 @@
     <Compile Include="ControllerRouteMapper.cs" />
     <Compile Include="Handlers\ControllerRouteHandler.cs" />
     <Compile Include="InvalidUrlComponentValueException.cs" />
-    <Compile Include="MvcDecoder.cs" />
     <Compile Include="MvcUrlUtilities\UrlRewriterHelper.cs" />
     <Compile Include="PathComponentExtensions.cs" />
     <Compile Include="PathComponents\BoolComponent.cs" />
@@ -104,7 +103,6 @@
     <Compile Include="System.Web.Mvc\Controller_Extensions.cs" />
     <Compile Include="TypeWitness.cs" />
     <Compile Include="UrlPattern.cs" />
-    <Compile Include="UrlPatternHandlerExtensions.cs" />
     <Compile Include="Urls.cs" />
   </ItemGroup>
   <ItemGroup>

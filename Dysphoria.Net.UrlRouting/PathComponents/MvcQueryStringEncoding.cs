@@ -28,10 +28,5 @@ namespace Dysphoria.Net.UrlRouting.PathComponents
 		{
 			return (value as RouteValueDictionary) ?? new RouteValueDictionary(value);
 		}
-
-		public override T FromDictionary(ControllerContext cx)
-		{
-			return MvcDecoder<T>.Instance.FromQueryString(cx);
-		}
 	}
 }

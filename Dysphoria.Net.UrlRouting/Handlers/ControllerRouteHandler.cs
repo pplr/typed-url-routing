@@ -29,15 +29,13 @@ namespace Dysphoria.Net.UrlRouting.Handlers
 		private readonly AbstractRequestPattern pattern;
 		private readonly string controllerName, actionName;
 		private readonly Type controllerType;
-		private readonly Func<C, ControllerContext, ActionResult> handler;
 
-		public ControllerRouteHandler(AbstractRequestPattern pattern, string controllerName, string actionName, Func<C, ControllerContext, ActionResult> handler)
+        public ControllerRouteHandler(AbstractRequestPattern pattern, string controllerName, string actionName)
 		{
 			this.pattern = pattern;
 			this.controllerName = controllerName;
 			this.actionName = actionName;
 			this.controllerType = typeof(C);
-			this.handler = handler;
 		}
 
 		protected override AbstractUrlPattern UrlPattern
@@ -57,8 +55,8 @@ namespace Dysphoria.Net.UrlRouting.Handlers
 			try
 			{
 				var fullController = controller as Controller;
-				if (fullController != null)
-				{
+                //if (fullController != null)
+                //{
 					fullController.ActionInvoker = new Invoker(this);
 					this.SetUpRouteData(context.RouteData);
 					var asyncController = (IAsyncController)fullController;
@@ -66,11 +64,11 @@ namespace Dysphoria.Net.UrlRouting.Handlers
 						context,
 						(asyncResult) => { asyncController.EndExecute(asyncResult); },
 						null);
-				}
-				else
-				{
-					ProcessRequestMinimally(new ControllerContext(context, controller), controller);
-				}
+                //}
+                //else
+                //{
+                //    ProcessRequestMinimally(new ControllerContext(context, controller), controller);
+                //}
 			}
 			finally
 			{
@@ -82,14 +80,14 @@ namespace Dysphoria.Net.UrlRouting.Handlers
 		/// Processes request, but without involving any filters. Therefore authentication
 		/// will probably not work. This is only practically any use for testing.
 		/// </summary>
-		private void ProcessRequestMinimally(ControllerContext controllerContext, C controller)
-		{
-			this.SetUpRouteData(controllerContext.RouteData);
-			controller.ControllerContext = controllerContext;
-			var result = this.handler.Invoke(controller, controllerContext);
+        //private void ProcessRequestMinimally(ControllerContext controllerContext, C controller)
+        //{
+        //    this.SetUpRouteData(controllerContext.RouteData);
+        //    controller.ControllerContext = controllerContext;
+        //    var result = this.handler.Invoke(controller, controllerContext, null);
 
-			result.ExecuteResult(controllerContext);
-		}
+        //    result.ExecuteResult(controllerContext);
+        //}
 
 		private void SetUpRouteData(RouteData routeData)
 		{
@@ -120,12 +118,49 @@ namespace Dysphoria.Net.UrlRouting.Handlers
 				this.outer = outer;
 			}
 
-			protected override ActionResult InvokeActionMethod(ControllerContext controllerContext, ActionDescriptor actionDescriptor, IDictionary<string, object> parameters)
-			{
-				return outer.handler.Invoke(
-					(C)controllerContext.Controller,
-					controllerContext);
-			}
+            protected override IDictionary<string, object> GetParameterValues(ControllerContext controllerContext, ActionDescriptor actionDescriptor)
+            {
+                Dictionary<string, object> parametersDict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                ParameterDescriptor[] parameterDescriptors = actionDescriptor.GetParameters();
+                AbstractUrlPattern p = this.outer.UrlPattern;
+                
+
+                for (int i = 0; i < parameterDescriptors.Length; i++)
+                {
+                    ParameterDescriptor parameterDescriptor = parameterDescriptors[i];
+                    String actionParameterName = parameterDescriptor.ParameterName;
+                    parametersDict[actionParameterName] = GetParameterValue(controllerContext, 
+                        i < p.Arity ? new PathParameterDescriptor(parameterDescriptor, p.ParameterName(i)) : parameterDescriptor);
+                }
+                return parametersDict;
+            }
 		}
+
+        private class PathParameterDescriptor : ParameterDescriptor
+        {
+            private readonly ParameterDescriptor original;
+            private readonly string _ParameterName;
+
+            public PathParameterDescriptor(ParameterDescriptor original, string parameterName)
+            {
+                this.original = original;
+                this._ParameterName = parameterName;
+            }
+
+            public override ActionDescriptor ActionDescriptor
+            {
+                get { return original.ActionDescriptor; }
+            }
+
+            public override string ParameterName
+            {
+                get { return this._ParameterName; }
+            }
+
+            public override Type ParameterType
+            {
+                get { return original.ParameterType; }
+            }
+        }
 	}
 }
